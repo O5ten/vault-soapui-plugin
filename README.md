@@ -1,0 +1,1 @@
+# vault-soapui-plugin
