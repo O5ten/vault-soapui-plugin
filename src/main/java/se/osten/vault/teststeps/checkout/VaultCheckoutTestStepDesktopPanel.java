@@ -1,9 +1,10 @@
 package se.osten.vault.teststeps.checkout;
 
-import com.eviware.soapui.impl.wsdl.testcase.WsdlTestCase;
+import com.eviware.soapui.support.UISupport;
+import com.eviware.soapui.support.components.JEditorStatusBarWithProgress;
+import com.eviware.soapui.support.components.JXToolBar;
 import com.eviware.soapui.support.components.SimpleBindingForm;
 import com.eviware.soapui.ui.support.ModelItemDesktopPanel;
-import com.google.common.collect.Sets;
 import com.jgoodies.binding.PresentationModel;
 import se.osten.vault.common.AuthBackend;
 
@@ -11,7 +12,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Set;
 
 /**
  * Simple DesktopPanel that provides a basic UI for configuring the EMailTestStep. Should perhaps be improved with
@@ -23,6 +23,9 @@ public class VaultCheckoutTestStepDesktopPanel extends ModelItemDesktopPanel<Vau
     private JComboBox authComboBox;
     private JTextField serverLocationTextField;
     private JPasswordField secretIdField;
+    private JEditorStatusBarWithProgress statusBar;
+    private CardLayout cards;
+    private JPanel cardPanel;
 
     public VaultCheckoutTestStepDesktopPanel(VaultCheckoutTestStep modelItem) {
         super(modelItem);
@@ -32,18 +35,46 @@ public class VaultCheckoutTestStepDesktopPanel extends ModelItemDesktopPanel<Vau
     }
 
     private void buildUI() {
+        addToolbar();
+        buildStatusLabel();
         addServerLocation();
         authBackend();
-        addSecretId();
+        addBackendOptions();
+
         add(new JScrollPane(form.getPanel()), BorderLayout.CENTER);
         setPreferredSize(new Dimension(500, 300));
     }
 
-    private void addSecretId() {
+    private void addToolbar() {
+        JXToolBar toolbar = UISupport.createToolbar();
+        toolbar.add(UISupport.createActionButton(new SubmitAction(), true));
+        this.form.append(toolbar);
+    }
+
+    private void buildStatusLabel() {
+        this.statusBar = new JEditorStatusBarWithProgress();
+        this.statusBar.setBorder(BorderFactory.createEmptyBorder(1, 0, 0, 0));
+        this.form.append(this.statusBar);
+    }
+
+    public JEditorStatusBarWithProgress getStatusBar() {
+        return this.statusBar;
+    }
+
+    private void addBackendOptions() {
         this.form.appendSeparator();
+        this.cardPanel = new JPanel(cards);
+        cardPanel.add(getAppRoleBackendOptions(), AuthBackend.AppRole.name());
+        cardPanel.add(getGitHubBackendOptions(), AuthBackend.GitHub.name());
+        this.form.append(cardPanel);
+        this.authComboBox.addActionListener(this);
+    }
+
+    private JPanel getAppRoleBackendOptions(){
+        SimpleBindingForm appRoleForm = new SimpleBindingForm(pm);
         this.secretIdField = this.form.appendPasswordField("Secret Id", "Secret Vault Id to identify the user");
         this.secretIdField.setText(this.getModelItem().getSecretId());
-        this.authComboBox.addActionListener(this);
+        return appRoleForm.getPanel();
     }
 
     private void authBackend() {
@@ -53,26 +84,9 @@ public class VaultCheckoutTestStepDesktopPanel extends ModelItemDesktopPanel<Vau
     }
 
     private void addServerLocation() {
-        this.form.appendSeparator();
         this.form.appendHeading("Server Configuration");
         this.serverLocationTextField = this.form.appendTextField("serverLocation", "Server Location", "http://vault-server.tld/v1");
         this.serverLocationTextField.addActionListener(this);
-    }
-
-    private Set<String> getTestStepNamesWithinRange() {
-        VaultCheckoutTestStep repeatStep = getModelItem();
-        WsdlTestCase testCase = repeatStep.getTestCase();
-        Set<String> testStepNames = testCase.getTestSteps().keySet();
-        Set<String> testStepNamesWithinRange = Sets.newLinkedHashSet();
-        int targetTestStepIndex = testCase.getTestStepIndexByName(repeatStep.getName());
-
-        for (String testStepName : testStepNames) {
-            int testStepIndex = testCase.getTestStepIndexByName(testStepName);
-            if (testStepIndex < targetTestStepIndex) {
-                testStepNamesWithinRange.add(testStepName);
-            }
-        }
-        return testStepNamesWithinRange;
     }
 
     @Override
@@ -80,9 +94,32 @@ public class VaultCheckoutTestStepDesktopPanel extends ModelItemDesktopPanel<Vau
         return super.release();
     }
 
+    public JPanel getGitHubBackendOptions() {
+        SimpleBindingForm gitHubForm = new SimpleBindingForm(pm);
+        gitHubForm.append(new JLabel("Enter GitHub Credentials"));
+        return gitHubForm.getPanel();
+    }
+
+    private class SubmitAction extends AbstractAction {
+        public SubmitAction() {
+            this.putValue("SmallIcon", UISupport.createImageIcon("/submit_request.gif"));
+            this.putValue("ShortDescription", "Submit request to vault and extract credentials (Alt-Enter)");
+            this.putValue("AcceleratorKey", UISupport.getKeyStroke("alt ENTER"));
+        }
+
+        public void actionPerformed(ActionEvent e) {
+            VaultCheckoutTestStepDesktopPanel.this.statusBar.setIndeterminate(false);
+            VaultCheckoutTestStepDesktopPanel.this.statusBar.setInfo("Running");
+            getModelItem().runOnce();
+            VaultCheckoutTestStepDesktopPanel.this.statusBar.setInfo("Credentials extracted");
+        }
+    }
+
     public void actionPerformed(ActionEvent e) {
+        AuthBackend backend = (AuthBackend) this.authComboBox.getSelectedItem();
         getModelItem().setServerLocation(this.serverLocationTextField.getText());
-        getModelItem().setAuthBackend((AuthBackend)this.authComboBox.getSelectedItem());
+        getModelItem().setAuthBackend(backend);
+        cards.show(cardPanel, backend.name());
         getModelItem().setSecretId(new String(secretIdField.getPassword()));
     }
 }
