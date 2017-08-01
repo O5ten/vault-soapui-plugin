@@ -22,10 +22,10 @@ import java.util.List;
 
 @PluginTestStep(typeName = "VaultCheckoutTestStep", name = "Vault Checkout TestStep",
         description = "Checkout credentials from Vault",
-        iconPath = "checkout.jpg")
+        iconPath = "vault-checkout.jpg")
 public class VaultCheckoutTestStep extends WsdlTestStepWithProperties {
 
-    private String serverLocation = "http://localhost/v1";
+    private String serverLocation = "http://localhost:8200/v1";
     private AuthBackend authBackend = AuthBackend.AppRole;
     private String token = "";
 
