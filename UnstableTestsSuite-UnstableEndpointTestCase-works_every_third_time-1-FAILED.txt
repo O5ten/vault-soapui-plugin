@@ -1,0 +1,38 @@
+Status: FAILED
+Time Taken: 5
+Size: 5
+Timestamp: Mon Jul 31 07:09:34 CEST 2017
+TestStep: works_every_third_time
+
+----------------- Messages ------------------------------
+[Invalid HTTP Status Codes] Response status code: 404 is in invalid list of status codes
+
+----------------- Properties ------------------------------
+StatusCode: 404
+Encoding: UTF-8
+Method: GET
+HTTP Version: HTTP/1.1
+Endpoint: http://localhost:8080/everyThirdTime
+URL: http://localhost:8080/everyThirdTime
+
+---------------- Request ---------------------------
+Host: [localhost:8080]
+Accept-Encoding: [gzip,deflate]
+User-Agent: [Apache-HttpClient/4.1.1 (java 1.5)]
+Connection: [Keep-Alive]
+
+GET http://localhost:8080/everyThirdTime HTTP/1.1
+Accept-Encoding: gzip,deflate
+Host: localhost:8080
+Connection: Keep-Alive
+User-Agent: Apache-HttpClient/4.1.1 (java 1.5)
+
+
+---------------- Response --------------------------
+#status#: [HTTP/1.1 404 Not Found]
+Content-Length: [25]
+Content-Encoding: [gzip]
+Content-Type: [text/html]
+Server: [Jetty(6.1.26)]
+
+FAIL2
