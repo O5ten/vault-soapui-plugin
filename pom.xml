@@ -259,23 +259,23 @@
                             </execution>
                         </executions>
                     </plugin>
-                    <plugin>
-                        <groupId>com.smartbear.soapui</groupId>
-                        <artifactId>soapui-maven-plugin</artifactId>
-                        <version>5.2.0</version>
-                        <configuration>
-                            <projectFile>Unstable-Endpoint-SoapUI-project.xml</projectFile>
-                            <testFailIgnore>true</testFailIgnore>
-                        </configuration>
-                        <executions>
-                            <execution>
-                                <phase>install</phase>
-                                <goals>
-                                    <goal>test</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
+                    <!--<plugin>-->
+                        <!--<groupId>com.smartbear.soapui</groupId>-->
+                        <!--<artifactId>soapui-maven-plugin</artifactId>-->
+                        <!--<version>5.2.0</version>-->
+                        <!--<configuration>-->
+                            <!--<projectFile>Unstable-Endpoint-SoapUI-project.xml</projectFile>-->
+                            <!--<testFailIgnore>true</testFailIgnore>-->
+                        <!--</configuration>-->
+                        <!--<executions>-->
+                            <!--<execution>-->
+                                <!--<phase>install</phase>-->
+                                <!--<goals>-->
+                                    <!--<goal>test</goal>-->
+                                <!--</goals>-->
+                            <!--</execution>-->
+                        <!--</executions>-->
+                    <!--</plugin>-->
                 </plugins>
             </build>
         </profile>
