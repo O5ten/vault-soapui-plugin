@@ -4,6 +4,6 @@ import com.eviware.soapui.impl.wsdl.actions.teststep.WsdlTestStepSoapUIActionGro
 
 public class VaultCheckoutTestStepActionGroup extends WsdlTestStepSoapUIActionGroup {
     public VaultCheckoutTestStepActionGroup() {
-        super("VaultCheckoutStepActions", "Vault Checkout Step Actions");
+        super("VaultCheckoutTestStepActions", "Vault Checkout Step Actions");
     }
 }

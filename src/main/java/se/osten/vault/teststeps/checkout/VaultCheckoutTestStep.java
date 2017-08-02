@@ -11,6 +11,7 @@ import com.eviware.soapui.model.testsuite.TestCaseRunContext;
 import com.eviware.soapui.model.testsuite.TestCaseRunner;
 import com.eviware.soapui.model.testsuite.TestStepResult;
 import com.eviware.soapui.plugins.auto.PluginTestStep;
+import com.eviware.soapui.support.UISupport;
 import com.eviware.soapui.support.types.StringToObjectMap;
 import com.eviware.soapui.support.xml.XmlObjectConfigurationBuilder;
 import com.eviware.soapui.support.xml.XmlObjectConfigurationReader;
@@ -18,10 +19,11 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.DefaultHttpClient;
 import se.osten.vault.common.AuthBackend;
 
+import javax.swing.*;
+
 @PluginTestStep(typeName = "VaultCheckoutTestStep", name = "Vault Checkout TestStep",
         description = "Checkout credentials from Vault",
         iconPath = "se/osten/vault/teststeps/checkout/vault-checkout.jpg")
-
 public class VaultCheckoutTestStep extends WsdlTestStepWithProperties {
 
     private String serverLocation = "http://localhost:8200/v1";
@@ -40,6 +42,11 @@ public class VaultCheckoutTestStep extends WsdlTestStepWithProperties {
             actionGroupAdded = true;
         }
         readConfig(config);
+    }
+
+    @Override
+    public ImageIcon getIcon() {
+        return UISupport.createImageIcon("vault-checkout.jpg");
     }
 
     private void readConfig(TestStepConfig config) {

@@ -10,6 +10,10 @@ import org.slf4j.LoggerFactory;
 public class VaultCheckoutTestStepPanelBuilder extends EmptyPanelBuilder<VaultCheckoutTestStep> {
     Logger logger = LoggerFactory.getLogger(VaultCheckoutTestStepPanelBuilder.class);
 
+    public VaultCheckoutTestStepPanelBuilder(){
+        logger.info("================> Registered plugin panel builder for VaultCheckoutTestStep");
+    }
+
     @Override
     public DesktopPanel buildDesktopPanel(VaultCheckoutTestStep modelItem) {
         return new VaultCheckoutTestStepDesktopPanel(modelItem);
