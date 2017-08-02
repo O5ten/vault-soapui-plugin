@@ -49,7 +49,6 @@ public class VaultCheckoutTestStepTest {
 
     @Test
     public void shouldExecuteTestStep() {
-        testStep.run(new WsdlTestCaseRunner(mock(WsdlTestCase.class), new StringToObjectMap()), new WsdlTestRunContext(testStep));
+        testStep.runOnce();
     }
-
 }

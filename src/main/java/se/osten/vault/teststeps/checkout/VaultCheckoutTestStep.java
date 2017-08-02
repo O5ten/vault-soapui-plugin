@@ -46,7 +46,7 @@ public class VaultCheckoutTestStep extends WsdlTestStepWithProperties {
 
     @Override
     public ImageIcon getIcon() {
-        return UISupport.createImageIcon("vault-checkout.jpg");
+        return UISupport.createImageIcon("se/osten/vault/teststeps/checkout/vault-checkout.jpg");
     }
 
     private void readConfig(TestStepConfig config) {
