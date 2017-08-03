@@ -15,10 +15,8 @@ import com.eviware.soapui.support.UISupport;
 import com.eviware.soapui.support.types.StringToObjectMap;
 import com.eviware.soapui.support.xml.XmlObjectConfigurationBuilder;
 import com.eviware.soapui.support.xml.XmlObjectConfigurationReader;
-import org.apache.http.client.HttpClient;
-import org.apache.http.impl.client.DefaultHttpClient;
 import se.osten.vault.common.AuthBackend;
-
+import se.osten.vault.common.VaultClient;
 import javax.swing.*;
 
 @PluginTestStep(typeName = "VaultCheckoutTestStep", name = "Vault Checkout TestStep",
@@ -26,14 +24,13 @@ import javax.swing.*;
         iconPath = "se/osten/vault/teststeps/checkout/vault-checkout.jpg")
 public class VaultCheckoutTestStep extends WsdlTestStepWithProperties {
 
-    private String serverLocation = "http://localhost:8200/v1";
+    private String serverLocation = "http://localhost:8200";
+    private String[] vaultPaths = {""}; //= read from config file
+    private String secretId = "";
+    private String roleId = "";
     private AuthBackend authBackend = AuthBackend.AppRole;
-    private String token = "";
 
     private static boolean actionGroupAdded = false;
-    private String secretId;
-
-    private HttpClient http = new DefaultHttpClient();
 
     public VaultCheckoutTestStep(WsdlTestCase testCase, TestStepConfig config, boolean forLoadTest) {
         super(testCase, config, true, true);
@@ -52,7 +49,7 @@ public class VaultCheckoutTestStep extends WsdlTestStepWithProperties {
     private void readConfig(TestStepConfig config) {
         if (config != null) {
             XmlObjectConfigurationReader reader = new XmlObjectConfigurationReader(config.getConfig());
-            this.serverLocation = reader.readString("severLocation", "http://localhost:8200/v1");
+            this.serverLocation = reader.readString("severLocation", "http://localhost:8200");
             this.authBackend = AuthBackend.valueOf(reader.readString("authBackend", "AppRole"));
             this.secretId = reader.readString("secretId", "");
         }
@@ -73,15 +70,23 @@ public class VaultCheckoutTestStep extends WsdlTestStepWithProperties {
     public TestStepResult run(TestCaseRunner testCaseRunner, TestCaseRunContext testCaseRunContext) {
         WsdlTestStepResult result = new WsdlTestStepResult(this);
 
-        //http.runOnce ...
-        //write token
+        VaultClient vaultClient = new VaultClient();
+        vaultClient.init(serverLocation);
 
-        //Use testCaseRunContext.setProperty(); to set the defined keys to the secrets.
-        //checkout secrets
+        switch(getAuthBackend()) {
+            case AppRole:
+                vaultClient.authenticateWithAppRole(roleId,
+                        secretId);
+                for(String vaultPath : vaultPaths) {
+                    vaultClient.read(vaultPath);
+                }
+                break;
+            case GitHub:
+                break;
+            default:
+                break;
+        }
 
-        //Write Checkout logic, write token, append result in WsdlTestStepResult
-
-        this.token = "TheToken";
         result.setStatus(TestStepResult.TestStepStatus.OK);
         return result;
     }
