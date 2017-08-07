@@ -17,6 +17,7 @@ import com.eviware.soapui.support.xml.XmlObjectConfigurationBuilder;
 import com.eviware.soapui.support.xml.XmlObjectConfigurationReader;
 import se.osten.vault.common.AuthBackend;
 import se.osten.vault.common.VaultClient;
+import org.apache.commons.lang.NotImplementedException;
 
 import javax.swing.*;
 
@@ -26,10 +27,12 @@ import javax.swing.*;
 public class VaultCheckoutTestStep extends WsdlTestStepWithProperties {
 
     private String serverLocation = "http://localhost:8200";
-    private String[] vaultPaths = {""}; //= read from config file
+    private String[] vaultPaths = {"secret/testDB"}; //read from config file
     private String secretId = "";
     private String roleId = "";
+    private String githubToken = "";
     private AuthBackend authBackend = AuthBackend.AppRole;
+    private boolean isAuthenticated = false;
 
     private static boolean actionGroupAdded = false;
 
@@ -53,6 +56,7 @@ public class VaultCheckoutTestStep extends WsdlTestStepWithProperties {
             this.serverLocation = reader.readString("severLocation", "http://localhost:8200");
             this.authBackend = AuthBackend.valueOf(reader.readString("authBackend", "AppRole"));
             this.secretId = reader.readString("secretId", "");
+            this.roleId = reader.readString("roleId", "");
         }
     }
 
@@ -60,6 +64,7 @@ public class VaultCheckoutTestStep extends WsdlTestStepWithProperties {
         XmlObjectConfigurationBuilder builder = new XmlObjectConfigurationBuilder();
         builder.add("serverLocation", this.serverLocation);
         builder.add("authBackend", this.authBackend.name());
+        builder.add("roleId", this.roleId);
         builder.add("secretId", this.secretId);
         getConfig().setConfig(builder.finish());
     }
@@ -74,22 +79,28 @@ public class VaultCheckoutTestStep extends WsdlTestStepWithProperties {
         VaultClient vaultClient = new VaultClient();
         vaultClient.init(serverLocation);
 
-        switch(getAuthBackend()) {
-            case AppRole:
-                vaultClient.authenticateWithAppRole(roleId,
-                        secretId);
-                for(String vaultPath : vaultPaths) {
-                    vaultClient.read(vaultPath);
-                }
-                break;
-            case GitHub:
-                break;
-            default:
-                break;
+        this.isAuthenticated = authenticate(vaultClient);
+        if(this.isAuthenticated) {
+            for(String vaultPath : vaultPaths) {
+                vaultClient.read(vaultPath);
+            }
         }
-
         result.setStatus(TestStepResult.TestStepStatus.OK);
         return result;
+    }
+
+    private boolean authenticate(VaultClient vaultClient) {
+        if(this.isAuthenticated) {
+            switch (getAuthBackend()) {
+                case AppRole:
+                    return vaultClient.authenticateWithAppRole(roleId, secretId);
+                case GitHub:
+                    return vaultClient.authenticateWithGithub(githubToken);
+                default:
+                    throw new NotImplementedException("Backend " + getAuthBackend() + " not implemented yet.");
+            }
+        }
+        return isAuthenticated;
     }
 
     public String getServerLocation() {
@@ -117,8 +128,24 @@ public class VaultCheckoutTestStep extends WsdlTestStepWithProperties {
         return secretId;
     }
 
+    public String getRoleId() {
+        return roleId;
+    }
+
+    public String getGithubToken() {
+        return githubToken;
+    }
+
     public void setSecretId(String secretId) {
         this.secretId = secretId;
+    }
+
+    public void setRoleId(String roleId) {
+        this.roleId = roleId;
+    }
+
+    public void setGithubToken(String githubToken) {
+        this.githubToken = githubToken;
     }
 
     public void runOnce() {

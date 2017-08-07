@@ -16,18 +16,33 @@ public class VaultClient {
                     .address(serverLocation)
                     .build();
             vault = new Vault(vaultConfig);
-            System.out.println("Connected to Vault");
+            System.out.println("Initiated Vault client @\"" + serverLocation + "\"");
         } catch(VaultException e) {
-           System.out.println("Failed to connect to Vault " + e);
+            new VaultPluginException("Failed to initiate Vault client @\""
+                    + serverLocation + "\"", e);
         }
     }
 
-    public void authenticateWithAppRole(String roleId, String secretId) {
-        vault = new AppRole(roleId, secretId).authenticate(vault, vaultConfig);
+    public boolean authenticateWithAppRole(String roleId, String secretId) {
+        try {
+            vault = new AppRole(roleId, secretId).authenticate(vault, vaultConfig);
+            System.out.println("Authenticated to Vault with AppRole");
+            return true;
+        } catch(VaultException e) {
+            new VaultPluginException("Unable to authenticate to Vault with AppRole", e);
+            return false;
+        }
     }
 
-    public void authenticateWithGithub() {
-
+    public boolean authenticateWithGithub(String githubToken) {
+        try {
+            vault = new Github(githubToken).authenticate(vault, vaultConfig);
+            System.out.println("Authenticated to Vault with Github");
+            return true;
+        } catch(VaultException e) {
+            new VaultPluginException("Unable to authenticate to Vault with Github", e);
+            return false;
+        }
     }
 
     public Map<String, String> read(String path) {
@@ -36,8 +51,7 @@ public class VaultClient {
             data = vault.logical().read(path).getData();
             System.out.println(data);
         } catch(VaultException e) {
-            System.out.println("Unable to read from Vault @ path "
-                    + path + " " + e);
+            new VaultPluginException("Unable to read from Vault @\"" + path + "\"", e);
         }
         return data;
     }
