@@ -2,6 +2,7 @@ package se.osten.vault.teststeps.checkout;
 
 import com.eviware.soapui.SoapUI;
 import com.eviware.soapui.config.TestStepConfig;
+import com.eviware.soapui.impl.rest.support.XmlBeansRestParamsTestPropertyHolder;
 import com.eviware.soapui.impl.wsdl.MutableTestPropertyHolder;
 import com.eviware.soapui.impl.wsdl.testcase.WsdlTestCase;
 import com.eviware.soapui.impl.wsdl.testcase.WsdlTestCaseRunner;
@@ -38,8 +39,6 @@ public class VaultCheckoutTestStep extends WsdlTestStepWithProperties implements
     private String roleId = "";
     private String githubToken = "";
     private AuthBackend authBackend = AuthBackend.AppRole;
-    private boolean isAuthenticated = false;
-    private List<DefaultTestStepProperty> vaultProperties;
     private static boolean actionGroupAdded = false;
     private String vaultSecret = "";
 
@@ -61,7 +60,7 @@ public class VaultCheckoutTestStep extends WsdlTestStepWithProperties implements
         if (config != null) {
             XmlObjectConfigurationReader reader = new XmlObjectConfigurationReader(config.getConfig());
             this.serverLocation = reader.readString("severLocation", "http://localhost:8200");
-            this.vaultSecret = reader.readString("vaultSecret","????");
+            this.vaultSecret = reader.readString("vaultSecret","");
             this.authBackend = AuthBackend.valueOf(reader.readString("authBackend", AuthBackend.AppRole.name()));
             this.secretId = reader.readString("secretId", "");
             this.roleId = reader.readString("roleId", "");
@@ -86,8 +85,7 @@ public class VaultCheckoutTestStep extends WsdlTestStepWithProperties implements
         WsdlTestStepResult result = new WsdlTestStepResult(this);
         VaultClient vaultClient = new VaultClient();
         vaultClient.init(serverLocation);
-        this.isAuthenticated = authenticate(vaultClient);
-        if(this.isAuthenticated) {
+        if(authenticate(vaultClient)) {
             vaultClient.read(this.vaultSecret);
         }
         result.setStatus(TestStepResult.TestStepStatus.OK);
@@ -95,21 +93,22 @@ public class VaultCheckoutTestStep extends WsdlTestStepWithProperties implements
     }
 
     private boolean authenticate(VaultClient vaultClient) {
-        if(this.isAuthenticated) {
-            switch (getAuthBackend()) {
-                case AppRole:
-                    return vaultClient.authenticateWithAppRole(roleId, secretId);
-                case GitHub:
-                    return vaultClient.authenticateWithGithub(githubToken);
-                default:
-                    throw new NotImplementedException("Backend " + getAuthBackend() + " not implemented yet.");
-            }
+        switch (getAuthBackend()) {
+            case AppRole:
+                return vaultClient.authenticateWithAppRole(roleId, secretId);
+            case GitHub:
+                return vaultClient.authenticateWithGithub(githubToken);
+            default:
+                throw new UnsupportedOperationException("Backend " + getAuthBackend() + " not implemented yet.");
         }
-        return isAuthenticated;
     }
 
     public String getServerLocation() {
         return this.serverLocation;
+    }
+
+    public String getVaultSecret() {
+        return this.vaultSecret;
     }
 
     public AuthBackend getAuthBackend() {
@@ -162,27 +161,20 @@ public class VaultCheckoutTestStep extends WsdlTestStepWithProperties implements
 
     public TestProperty addProperty(String s) {
         DefaultTestStepProperty property = new DefaultTestStepProperty(s, this);
-        vaultProperties.add(property);
+        this.addProperty(property);
         return property;
     }
 
     public TestProperty removeProperty(String s) {
-        DefaultTestStepProperty property = null;
-        for( DefaultTestStepProperty p : vaultProperties){
-            if(p.getName().equals(s)){
-                property = p;
-                break;
-            }
-        }
-        return property;
+        return this.getProperties().remove(s);
     }
 
     public boolean renameProperty(String s, String s1) {
-        for( DefaultTestStepProperty p : vaultProperties){
-            if(p.getName().equals(s)){
-                p.setName(s1);
-                return true;
-            }
+        TestProperty testProperty = getProperties().get(s);
+        if(testProperty != null){
+            getProperties().remove(s);
+            getProperties().put(s1, testProperty);
+            return true;
         }
         return false;
     }

@@ -57,15 +57,13 @@ public class VaultCheckoutTestStepDesktopPanel extends ModelItemDesktopPanel<Vau
     }
 
     private void addVaultSecret() {
+        this.vaultSecretField = this.form.appendTextField("vaultSecret", "Vault Secret", "http://vault-server.tld/v1");
+        this.vaultSecretField.setText(this.getModelItem().getRoleId());
+        this.vaultSecretField.addActionListener(this);
     }
 
     private void addCredentialProperties() {
-        this.form.append(new JLabel("The vault secret will extract to matching values into test properties"));
-        this.form.append(new JLabel("If not specified then the secret will assume the same key as in vault"));
         this.propertiesTable = new PropertyHolderTable(getModelItem());
-        JTableHeader header = this.propertiesTable.getPropertiesTable().getTableHeader();
-        header.getColumnModel().getColumn(0).setHeaderValue("Test Property");
-        header.getColumnModel().getColumn(0).setHeaderValue("Vault Key");
         this.form.append(propertiesTable);
     }
 
@@ -98,8 +96,10 @@ public class VaultCheckoutTestStepDesktopPanel extends ModelItemDesktopPanel<Vau
         SimpleBindingForm appRoleForm = new SimpleBindingForm(pm);
         this.roleIdField = appRoleForm.appendTextField("roleId", "Role Id", "");
         this.roleIdField.setText(this.getModelItem().getRoleId());
+        this.roleIdField.addActionListener(this);
         this.secretIdField = appRoleForm.appendPasswordField("secretId", "Secret Id", "Secret Vault Id to identify the user");
         this.secretIdField.setText(this.getModelItem().getSecretId());
+        this.secretIdField.addActionListener(this);
         return appRoleForm.getPanel();
     }
 
