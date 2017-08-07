@@ -17,6 +17,7 @@ import com.eviware.soapui.support.xml.XmlObjectConfigurationBuilder;
 import com.eviware.soapui.support.xml.XmlObjectConfigurationReader;
 import se.osten.vault.common.AuthBackend;
 import se.osten.vault.common.VaultClient;
+
 import javax.swing.*;
 
 @PluginTestStep(typeName = "VaultCheckoutTestStep", name = "Vault Checkout TestStep",
