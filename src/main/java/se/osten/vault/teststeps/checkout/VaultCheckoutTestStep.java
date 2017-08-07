@@ -26,9 +26,10 @@ import javax.swing.*;
 public class VaultCheckoutTestStep extends WsdlTestStepWithProperties {
 
     private String serverLocation = "http://localhost:8200";
-    private String[] vaultPaths = {""}; //= read from config file
+    private String[] vaultPaths = {"secret/testDB"}; //read from config file
     private String secretId = "";
     private String roleId = "";
+    private String githubToken = "";
     private AuthBackend authBackend = AuthBackend.AppRole;
 
     private static boolean actionGroupAdded = false;
@@ -53,6 +54,7 @@ public class VaultCheckoutTestStep extends WsdlTestStepWithProperties {
             this.serverLocation = reader.readString("severLocation", "http://localhost:8200");
             this.authBackend = AuthBackend.valueOf(reader.readString("authBackend", "AppRole"));
             this.secretId = reader.readString("secretId", "");
+            this.roleId = reader.readString("roleId", "");
         }
     }
 
@@ -60,6 +62,7 @@ public class VaultCheckoutTestStep extends WsdlTestStepWithProperties {
         XmlObjectConfigurationBuilder builder = new XmlObjectConfigurationBuilder();
         builder.add("serverLocation", this.serverLocation);
         builder.add("authBackend", this.authBackend.name());
+        builder.add("roleId", this.roleId);
         builder.add("secretId", this.secretId);
         getConfig().setConfig(builder.finish());
     }
@@ -76,16 +79,19 @@ public class VaultCheckoutTestStep extends WsdlTestStepWithProperties {
 
         switch(getAuthBackend()) {
             case AppRole:
-                vaultClient.authenticateWithAppRole(roleId,
-                        secretId);
-                for(String vaultPath : vaultPaths) {
-                    vaultClient.read(vaultPath);
-                }
+                vaultClient.authenticateWithAppRole(roleId, secretId);
                 break;
             case GitHub:
+                vaultClient.authenticateWithGithub(githubToken);
                 break;
             default:
                 break;
+        }
+
+        if(vaultClient.isAuthenticated()) {
+            for(String vaultPath : vaultPaths) {
+                vaultClient.read(vaultPath);
+            }
         }
 
         result.setStatus(TestStepResult.TestStepStatus.OK);
@@ -117,8 +123,24 @@ public class VaultCheckoutTestStep extends WsdlTestStepWithProperties {
         return secretId;
     }
 
+    public String getRoleId() {
+        return roleId;
+    }
+
+    public String getGithubToken() {
+        return githubToken;
+    }
+
     public void setSecretId(String secretId) {
         this.secretId = secretId;
+    }
+
+    public void setRoleId(String roleId) {
+        this.roleId = roleId;
+    }
+
+    public void setGithubToken(String githubToken) {
+        this.githubToken = githubToken;
     }
 
     public void runOnce() {

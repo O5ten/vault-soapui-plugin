@@ -22,6 +22,7 @@ public class VaultCheckoutTestStepDesktopPanel extends ModelItemDesktopPanel<Vau
     private SimpleBindingForm form;
     private JComboBox authComboBox;
     private JTextField serverLocationTextField;
+    private JTextField roleIdField;
     private JPasswordField secretIdField;
     private JEditorStatusBarWithProgress statusBar;
     private CardLayout cards;
@@ -72,7 +73,9 @@ public class VaultCheckoutTestStepDesktopPanel extends ModelItemDesktopPanel<Vau
 
     private JPanel getAppRoleBackendOptions(){
         SimpleBindingForm appRoleForm = new SimpleBindingForm(pm);
-        this.secretIdField = this.form.appendPasswordField("Secret Id", "Secret Vault Id to identify the user");
+        this.roleIdField = this.form.appendTextField("roleId", "Role Id", "");
+        this.roleIdField.setText(this.getModelItem().getRoleId());
+        this.secretIdField = this.form.appendPasswordField("secretId", "Secret Id", "Secret Vault Id to identify the user");
         this.secretIdField.setText(this.getModelItem().getSecretId());
         return appRoleForm.getPanel();
     }
@@ -120,6 +123,7 @@ public class VaultCheckoutTestStepDesktopPanel extends ModelItemDesktopPanel<Vau
         getModelItem().setServerLocation(this.serverLocationTextField.getText());
         getModelItem().setAuthBackend(backend);
         cards.show(cardPanel, backend.name());
+        getModelItem().setRoleId(roleIdField.getText());
         getModelItem().setSecretId(new String(secretIdField.getPassword()));
     }
 }

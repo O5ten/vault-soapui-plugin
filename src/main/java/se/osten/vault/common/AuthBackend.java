@@ -2,7 +2,7 @@ package se.osten.vault.common;
 
 public enum AuthBackend {
     AppRole("approle"),
-    GitHub("/auth/github/login");
+    GitHub("github");
 
     private final String apiPath;
 
