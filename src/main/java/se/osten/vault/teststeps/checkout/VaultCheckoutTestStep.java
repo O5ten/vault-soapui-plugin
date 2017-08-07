@@ -17,6 +17,7 @@ import com.eviware.soapui.support.xml.XmlObjectConfigurationBuilder;
 import com.eviware.soapui.support.xml.XmlObjectConfigurationReader;
 import se.osten.vault.common.AuthBackend;
 import se.osten.vault.common.VaultClient;
+import org.apache.commons.lang.NotImplementedException;
 
 import javax.swing.*;
 
@@ -31,6 +32,7 @@ public class VaultCheckoutTestStep extends WsdlTestStepWithProperties {
     private String roleId = "";
     private String githubToken = "";
     private AuthBackend authBackend = AuthBackend.AppRole;
+    private boolean isAuthenticated = false;
 
     private static boolean actionGroupAdded = false;
 
@@ -77,25 +79,28 @@ public class VaultCheckoutTestStep extends WsdlTestStepWithProperties {
         VaultClient vaultClient = new VaultClient();
         vaultClient.init(serverLocation);
 
-        switch(getAuthBackend()) {
-            case AppRole:
-                vaultClient.authenticateWithAppRole(roleId, secretId);
-                break;
-            case GitHub:
-                vaultClient.authenticateWithGithub(githubToken);
-                break;
-            default:
-                break;
-        }
-
-        if(vaultClient.isAuthenticated()) {
+        this.isAuthenticated = authenticate(vaultClient);
+        if(this.isAuthenticated) {
             for(String vaultPath : vaultPaths) {
                 vaultClient.read(vaultPath);
             }
         }
-
         result.setStatus(TestStepResult.TestStepStatus.OK);
         return result;
+    }
+
+    private boolean authenticate(VaultClient vaultClient) {
+        if(this.isAuthenticated) {
+            switch (getAuthBackend()) {
+                case AppRole:
+                    return vaultClient.authenticateWithAppRole(roleId, secretId);
+                case GitHub:
+                    return vaultClient.authenticateWithGithub(githubToken);
+                default:
+                    throw new NotImplementedException("Backend " + getAuthBackend() + " not implemented yet.");
+            }
+        }
+        return isAuthenticated;
     }
 
     public String getServerLocation() {

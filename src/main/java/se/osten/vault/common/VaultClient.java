@@ -9,7 +9,6 @@ import java.util.Map;
 public class VaultClient {
     private Vault vault;
     private VaultConfig vaultConfig;
-    private boolean authenticated = false;
 
     public void init(String serverLocation) {
         try {
@@ -24,25 +23,25 @@ public class VaultClient {
         }
     }
 
-    public void authenticateWithAppRole(String roleId, String secretId) {
+    public boolean authenticateWithAppRole(String roleId, String secretId) {
         try {
             vault = new AppRole(roleId, secretId).authenticate(vault, vaultConfig);
-            authenticated = true;
             System.out.println("Authenticated to Vault with AppRole");
+            return true;
         } catch(VaultException e) {
-            authenticated = false;
             new VaultPluginException("Unable to authenticate to Vault with AppRole", e);
+            return false;
         }
     }
 
-    public void authenticateWithGithub(String githubToken) {
+    public boolean authenticateWithGithub(String githubToken) {
         try {
             vault = new Github(githubToken).authenticate(vault, vaultConfig);
-            authenticated = true;
             System.out.println("Authenticated to Vault with Github");
+            return true;
         } catch(VaultException e) {
-            authenticated = false;
             new VaultPluginException("Unable to authenticate to Vault with Github", e);
+            return false;
         }
     }
 
@@ -55,9 +54,5 @@ public class VaultClient {
             new VaultPluginException("Unable to read from Vault @\"" + path + "\"", e);
         }
         return data;
-    }
-
-    public boolean isAuthenticated() {
-        return authenticated;
     }
 }
