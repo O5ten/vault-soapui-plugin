@@ -1,5 +1,6 @@
 package se.osten.vault.teststeps.checkout;
 
+import com.eviware.soapui.impl.wsdl.panels.teststeps.support.PropertyHolderTable;
 import com.eviware.soapui.support.UISupport;
 import com.eviware.soapui.support.components.JEditorStatusBarWithProgress;
 import com.eviware.soapui.support.components.JXToolBar;
@@ -9,9 +10,12 @@ import com.jgoodies.binding.PresentationModel;
 import se.osten.vault.common.AuthBackend;
 
 import javax.swing.*;
+import javax.swing.table.JTableHeader;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+
+import static se.osten.vault.common.AuthBackend.*;
 
 /**
  * Simple DesktopPanel that provides a basic UI for configuring the EMailTestStep. Should perhaps be improved with
@@ -27,11 +31,15 @@ public class VaultCheckoutTestStepDesktopPanel extends ModelItemDesktopPanel<Vau
     private JEditorStatusBarWithProgress statusBar;
     private CardLayout cards;
     private JPanel cardPanel;
+    private JPasswordField personalTokenField;
+    private PropertyHolderTable propertiesTable;
+    private JTextField vaultSecretField;
 
     public VaultCheckoutTestStepDesktopPanel(VaultCheckoutTestStep modelItem) {
         super(modelItem);
         this.pm = new PresentationModel<VaultCheckoutTestStep>(getModelItem());
         this.form = new SimpleBindingForm(pm);
+        this.cards = new CardLayout();
         buildUI();
     }
 
@@ -39,11 +47,26 @@ public class VaultCheckoutTestStepDesktopPanel extends ModelItemDesktopPanel<Vau
         addToolbar();
         buildStatusLabel();
         addServerLocation();
-        authBackend();
+        addVaultSecret();
+        addCredentialProperties();
+        addAuthBackend();
         addBackendOptions();
 
         add(new JScrollPane(form.getPanel()), BorderLayout.CENTER);
         setPreferredSize(new Dimension(500, 300));
+    }
+
+    private void addVaultSecret() {
+    }
+
+    private void addCredentialProperties() {
+        this.form.append(new JLabel("The vault secret will extract to matching values into test properties"));
+        this.form.append(new JLabel("If not specified then the secret will assume the same key as in vault"));
+        this.propertiesTable = new PropertyHolderTable(getModelItem());
+        JTableHeader header = this.propertiesTable.getPropertiesTable().getTableHeader();
+        header.getColumnModel().getColumn(0).setHeaderValue("Test Property");
+        header.getColumnModel().getColumn(0).setHeaderValue("Vault Key");
+        this.form.append(propertiesTable);
     }
 
     private void addToolbar() {
@@ -65,24 +88,24 @@ public class VaultCheckoutTestStepDesktopPanel extends ModelItemDesktopPanel<Vau
     private void addBackendOptions() {
         this.form.appendSeparator();
         this.cardPanel = new JPanel(cards);
-        cardPanel.add(getAppRoleBackendOptions(), AuthBackend.AppRole.name());
-        cardPanel.add(getGitHubBackendOptions(), AuthBackend.GitHub.name());
+        cardPanel.add(getAppRoleBackendOptions(), AppRole.name());
+        cardPanel.add(getGitHubBackendOptions(), GitHub.name());
         this.form.append(cardPanel);
         this.authComboBox.addActionListener(this);
     }
 
     private JPanel getAppRoleBackendOptions(){
         SimpleBindingForm appRoleForm = new SimpleBindingForm(pm);
-        this.roleIdField = this.form.appendTextField("roleId", "Role Id", "");
+        this.roleIdField = appRoleForm.appendTextField("roleId", "Role Id", "");
         this.roleIdField.setText(this.getModelItem().getRoleId());
-        this.secretIdField = this.form.appendPasswordField("secretId", "Secret Id", "Secret Vault Id to identify the user");
+        this.secretIdField = appRoleForm.appendPasswordField("secretId", "Secret Id", "Secret Vault Id to identify the user");
         this.secretIdField.setText(this.getModelItem().getSecretId());
         return appRoleForm.getPanel();
     }
 
-    private void authBackend() {
+    private void addAuthBackend() {
         this.form.appendSeparator();
-        this.authComboBox = this.form.appendComboBox("Auth Backend", AuthBackend.values(), "Authentication backend");
+        this.authComboBox = this.form.appendComboBox("Auth Backend", values(), "Authentication backend");
         this.authComboBox.addActionListener(this);
     }
 
@@ -99,7 +122,8 @@ public class VaultCheckoutTestStepDesktopPanel extends ModelItemDesktopPanel<Vau
 
     public JPanel getGitHubBackendOptions() {
         SimpleBindingForm gitHubForm = new SimpleBindingForm(pm);
-        gitHubForm.append(new JLabel("Enter GitHub Credentials"));
+        gitHubForm.append(new JLabel("Enter GitHub Personalized Token"));
+        this.personalTokenField = gitHubForm.appendPasswordField("Token","personalized token from github organization or account");
         return gitHubForm.getPanel();
     }
 
@@ -125,5 +149,7 @@ public class VaultCheckoutTestStepDesktopPanel extends ModelItemDesktopPanel<Vau
         cards.show(cardPanel, backend.name());
         getModelItem().setRoleId(roleIdField.getText());
         getModelItem().setSecretId(new String(secretIdField.getPassword()));
+        getModelItem().setGithubToken(new String(this.personalTokenField.getPassword()));
+        getModelItem().setVaultSecret(vaultSecretField.getText());
     }
 }
