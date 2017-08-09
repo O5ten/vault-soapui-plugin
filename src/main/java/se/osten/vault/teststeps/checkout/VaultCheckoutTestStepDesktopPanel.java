@@ -53,12 +53,12 @@ public class VaultCheckoutTestStepDesktopPanel extends ModelItemDesktopPanel<Vau
         addBackendOptions();
 
         add(new JScrollPane(form.getPanel()), BorderLayout.CENTER);
-        setPreferredSize(new Dimension(500, 300));
+        setPreferredSize(new Dimension(600, 800));
     }
 
     private void addVaultSecret() {
         this.vaultSecretField = this.form.appendTextField("vaultSecret", "Vault Secret", "http://vault-server.tld/v1");
-        this.vaultSecretField.setText(this.getModelItem().getRoleId());
+        this.vaultSecretField.setText(this.getModelItem().getVaultSecret());
         this.vaultSecretField.addActionListener(this);
     }
 
@@ -92,9 +92,9 @@ public class VaultCheckoutTestStepDesktopPanel extends ModelItemDesktopPanel<Vau
         this.authComboBox.addActionListener(this);
     }
 
-    private JPanel getAppRoleBackendOptions(){
+    private JPanel getAppRoleBackendOptions() {
         SimpleBindingForm appRoleForm = new SimpleBindingForm(pm);
-        this.roleIdField = appRoleForm.appendTextField("roleId", "Role Id", "");
+        this.roleIdField = appRoleForm.appendTextField("roleId", "Role Id", "Role Id for the AppRole");
         this.roleIdField.setText(this.getModelItem().getRoleId());
         this.roleIdField.addActionListener(this);
         this.secretIdField = appRoleForm.appendPasswordField("secretId", "Secret Id", "Secret Vault Id to identify the user");
@@ -106,12 +106,14 @@ public class VaultCheckoutTestStepDesktopPanel extends ModelItemDesktopPanel<Vau
     private void addAuthBackend() {
         this.form.appendSeparator();
         this.authComboBox = this.form.appendComboBox("Auth Backend", values(), "Authentication backend");
+        this.authComboBox.setSelectedItem(getModelItem().getAuthBackend());
         this.authComboBox.addActionListener(this);
     }
 
     private void addServerLocation() {
         this.form.appendHeading("Server Configuration");
         this.serverLocationTextField = this.form.appendTextField("serverLocation", "Server Location", "http://vault-server.tld/v1");
+        this.serverLocationTextField.setText(this.getModelItem().getServerLocation());
         this.serverLocationTextField.addActionListener(this);
     }
 
@@ -123,7 +125,8 @@ public class VaultCheckoutTestStepDesktopPanel extends ModelItemDesktopPanel<Vau
     public JPanel getGitHubBackendOptions() {
         SimpleBindingForm gitHubForm = new SimpleBindingForm(pm);
         gitHubForm.append(new JLabel("Enter GitHub Personalized Token"));
-        this.personalTokenField = gitHubForm.appendPasswordField("Token","personalized token from github organization or account");
+        this.personalTokenField = gitHubForm.appendPasswordField("Token", "personalized token from github organization or account");
+        this.personalTokenField.setText(getModelItem().getGithubToken());
         return gitHubForm.getPanel();
     }
 
@@ -134,22 +137,34 @@ public class VaultCheckoutTestStepDesktopPanel extends ModelItemDesktopPanel<Vau
             this.putValue("AcceleratorKey", UISupport.getKeyStroke("alt ENTER"));
         }
 
-        public void actionPerformed(ActionEvent e) {
+        private void start() {
+            this.putValue("SmallIcon", UISupport.createImageIcon("/stop.png"));
             VaultCheckoutTestStepDesktopPanel.this.statusBar.setIndeterminate(false);
             VaultCheckoutTestStepDesktopPanel.this.statusBar.setInfo("Running");
-            getModelItem().runOnce();
-            VaultCheckoutTestStepDesktopPanel.this.statusBar.setInfo("Credentials extracted");
+        }
+
+        private void stop(VaultCheckoutTestStepResult result) {
+            VaultCheckoutTestStepDesktopPanel.this.statusBar.setInfo(result.getStatus() + "! " + result.getKeyChain().keySet().size() + " credentials extracted");
+            this.putValue("SmallIcon", UISupport.createImageIcon("/submit_request.gif"));
+        }
+
+        public void actionPerformed(ActionEvent e) {
+            start();
+            VaultCheckoutTestStepResult result = getModelItem().runOnce();
+            stop(result);
         }
     }
 
     public void actionPerformed(ActionEvent e) {
         AuthBackend backend = (AuthBackend) this.authComboBox.getSelectedItem();
-        getModelItem().setServerLocation(this.serverLocationTextField.getText());
-        getModelItem().setAuthBackend(backend);
+        VaultCheckoutTestStep step = getModelItem();
+        step.setServerLocation(this.serverLocationTextField.getText());
+        step.setAuthBackend(backend);
         cards.show(cardPanel, backend.name());
-        getModelItem().setRoleId(roleIdField.getText());
-        getModelItem().setSecretId(new String(secretIdField.getPassword()));
-        getModelItem().setGithubToken(new String(this.personalTokenField.getPassword()));
-        getModelItem().setVaultSecret(vaultSecretField.getText());
+        step.setRoleId(roleIdField.getText());
+        step.setSecretId(new String(secretIdField.getPassword()));
+        step.setGithubToken(new String(this.personalTokenField.getPassword()));
+        step.setVaultSecret(vaultSecretField.getText());
+        step.updateConfig();
     }
 }

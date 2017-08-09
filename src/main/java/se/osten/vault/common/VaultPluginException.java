@@ -1,8 +1,7 @@
 package se.osten.vault.common;
 
-public class VaultPluginException {
+public class VaultPluginException extends RuntimeException {
     public VaultPluginException(String msg, Throwable e) {
-        System.out.println(msg);
-        System.out.println(e.toString());
+        super(msg, e);
     }
 }
