@@ -30,7 +30,7 @@ import java.util.Map;
 @PluginTestStep(typeName = "VaultCheckoutTestStep", name = "Vault Checkout TestStep",
         description = "Checkout credentials from Vault",
         iconPath = "se/osten/vault/teststeps/checkout/vault-checkout.jpg")
-public class VaultCheckoutTestStep extends WsdlTestStepWithProperties implements MutableTestPropertyHolder {
+public class VaultCheckoutTestStep extends WsdlTestStepWithProperties {
 
     private String serverLocation = "";
     private String secretId = "";
@@ -89,6 +89,13 @@ public class VaultCheckoutTestStep extends WsdlTestStepWithProperties implements
             vaultClient.init(serverLocation);
             if (authenticate(vaultClient)) {
                 keychain.putAll(vaultClient.read(this.vaultSecret));
+            }
+            for(String key : keychain.keySet()){
+                String value = keychain.get(key);
+                DefaultTestStepProperty prop = new DefaultTestStepProperty(key, this);
+                prop.setValue(value);
+                prop.setIsReadOnly(true);
+                this.addProperty(prop, true);
             }
             result.setKeyChain(keychain);
             result.setStatus(TestStepResult.TestStepStatus.OK);
@@ -164,26 +171,6 @@ public class VaultCheckoutTestStep extends WsdlTestStepWithProperties implements
                         this.getTestCase(),
                         new StringToObjectMap()),
                 new WsdlTestRunContext(this));
-    }
-
-    public TestProperty addProperty(String s) {
-        DefaultTestStepProperty property = new DefaultTestStepProperty(s, this);
-        super.addProperty(property, true);
-        return property;
-    }
-
-    public TestProperty removeProperty(String s) {
-        return this.getProperties().remove(s);
-    }
-
-    public boolean renameProperty(String s, String s1) {
-        DefaultTestStepProperty testProperty = (DefaultTestStepProperty) getProperties().remove(s);
-        if (testProperty == null) {
-            return false;
-        }
-        testProperty.setName(s1);
-        getProperties().put(s1, testProperty);
-        return true;
     }
 
     public void setVaultSecret(String vaultSecret) {
